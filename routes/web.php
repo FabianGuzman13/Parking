@@ -7,6 +7,9 @@ use App\Http\Controllers\ReservaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\ReporteController;
+
+Route::get('/reporte/descargar', [ReporteController::class, 'descargarReporte'])->name('reporte.descargar');
 
 Route::post('/contacto/enviar', [ContactoController::class, 'enviar'])->name('contacto.enviar');
 

@@ -117,6 +117,7 @@
         <a href="{{ url('/tarifas') }}">Tarifas</a>
         <a href="{{ url('/ubicacion') }}">Ubicación</a>
         <a href="{{ url('/contacto') }}">Contacto</a>
+        
     </nav>
 </header>
 

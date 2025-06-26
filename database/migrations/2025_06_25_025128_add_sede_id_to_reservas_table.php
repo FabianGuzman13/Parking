@@ -12,8 +12,10 @@ return new class extends Migration
 public function up()
 {
     Schema::table('reservas', function (Blueprint $table) {
-        $table->unsignedBigInteger('sede_id')->after('id');
-        // $table->foreign('sede_id')->references('id')->on('sedes')->onDelete('cascade');
+        if (!Schema::hasColumn('reservas', 'sede_id')) {
+            $table->unsignedBigInteger('sede_id')->after('id');
+            $table->foreign('sede_id')->references('id')->on('sedes')->onDelete('cascade');
+        }
     });
 }
 

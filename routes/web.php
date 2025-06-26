@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ReservaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ContactoController;
 
 Route::post('/contacto/enviar', [ContactoController::class, 'enviar'])->name('contacto.enviar');
@@ -21,31 +20,20 @@ Route::get('/', [HomeController::class, 'index'])->name('welcome');
 // Rutas de reservas por sede
 Route::get('/reservas/sede/{sede}', [ReservaController::class, 'reservaPorSede'])->name('reservas.sede');
 
-// Rutas de administración (solo para admin)
-Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+// Rutas de reservas (sin admin)
+Route::get('/reservas/create', [ReservaController::class, 'create'])->name('reservas.create');
+Route::post('/reservas', [ReservaController::class, 'store'])->name('reservas.store');
+Route::post('/reservas/{id}/salida', [ReservaController::class, 'registrarSalida'])->name('reservas.salida');
+Route::get('/reservas/ticket/{id}', [ReservaController::class, 'ticket'])->name('reservas.ticket');
+Route::get('/reservas/sede/{sede}', [App\Http\Controllers\ReservaController::class, 'reservaPorSede'])->name('reservas.reservaPorSede');
 
-    // Ejemplo de rutas de administración:
-    Route::get('/usuarios', [AdminController::class, 'usuarios'])->name('admin.usuarios');
-    Route::get('/tarifas', [AdminController::class, 'tarifas'])->name('admin.tarifas');
-    Route::get('/sedes', [AdminController::class, 'sedes'])->name('admin.sedes');
+// Configuración avanzada (Livewire Volt)
+Route::redirect('settings', 'settings/profile');
+Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
+Volt::route('settings/password', 'settings.password')->name('settings.password');
+Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
-    // Rutas de reservas (solo admin)
-    Route::get('/reservas/create', [ReservaController::class, 'create'])->name('reservas.create');
-    Route::post('/reservas', [ReservaController::class, 'store'])->name('reservas.store');
-    Route::post('/reservas/{id}/salida', [ReservaController::class, 'registrarSalida'])->name('reservas.salida');
-    Route::get('/reservas/ticket/{id}', [ReservaController::class, 'ticket'])->name('reservas.ticket');
-
-    // Configuración avanzada (Livewire Volt)
-    Route::redirect('settings', 'settings/profile');
-    Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
-    Volt::route('settings/password', 'settings.password')->name('settings.password');
-    Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
-});
-
-// Rutas de perfil (solo requieren auth, no admin)
+// Rutas de perfil (solo requieren auth)
 Route::middleware(['auth'])->group(function () {
     // Ver perfil (solo mostrar)
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

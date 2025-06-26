@@ -66,4 +66,8 @@ protected $fillable = [
 
         return $tarifa * $horas;
     }
+    public function sede()
+{
+    return $this->belongsTo(\App\Models\Sede::class);
+}
 }

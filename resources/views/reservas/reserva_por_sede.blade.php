@@ -63,6 +63,7 @@
                 </button>
             </form>
 
+            {{-- Mensaje de éxito y botón Generar ticket ABAJO del formulario --}}
             @if(session('success') && session('reserva'))
                 <div class="alert alert-success mt-4">
                     <h5>Reserva guardada:</h5>

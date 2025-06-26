@@ -10,36 +10,53 @@ use App\Models\Sede;
 
 class ReservaController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
-        // Obtén los lugares ocupados desde la base de datos
-        $ocupados = DB::table('reservas')->pluck('posicion')->toArray();
-        return view('reservas.create', compact('ocupados'));
+        $sede_id = $request->input('sede_id');
+        $ocupados = DB::table('reservas')
+            ->where('sede_id', $sede_id)
+            ->whereNull('hora_salida') // solo los lugares actualmente ocupados
+            ->pluck('posicion')
+            ->toArray();
+
+        return view('reservas.create', compact('ocupados', 'sede_id'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'posicion' => 'required|string|max:255',
-            'placa' => 'required|string|max:20',
-            'tipo_vehiculo' => 'required|string|max:20',
-            'sede_id' => 'required|exists:sedes,id',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'posicion' => 'required|string|max:255',
+        'placa' => 'required|string|max:20',
+        'tipo_vehiculo' => 'required|string|max:20',
+        'sede_id' => 'required|exists:sedes,id',
+    ]);
 
-        // Asegúrate de que el modelo Reserva tenga 'sede_id' en $fillable
-        $reserva = Reserva::create([
-            'user_id' => Auth::id(),
-            'sede_id' => $request->input('sede_id'),
-            'posicion' => $request->input('posicion'),
-            'placa' => $request->input('placa'),
-            'tipo_vehiculo' => $request->input('tipo_vehiculo'),
-            'hora_entrada' => now()->format('H:i'),
-            'fecha' => now()->format('Y-m-d'),
-            'hora_salida' => null,
-        ]);
+    // Validar que la posición esté libre SOLO en la sede seleccionada
+    $existe = Reserva::where('sede_id', $request->sede_id)
+        ->where('posicion', $request->posicion)
+        ->whereNull('hora_salida')
+        ->exists();
 
-        return redirect()->route('reservas.create')->with('success', '¡Reserva registrada exitosamente!')->with('reserva', $reserva);
+    if ($existe) {
+        return back()->withErrors(['posicion' => 'El lugar ya está ocupado.'])->withInput();
     }
+
+    // Guardar la reserva
+$reserva = Reserva::create([
+    'user_id' => auth()->id(), // <-- agrega esta línea
+    'sede_id' => $request->sede_id,
+    'posicion' => $request->posicion,
+    'placa' => $request->placa,
+    'tipo_vehiculo' => $request->tipo_vehiculo,
+    'fecha' => now()->toDateString(),
+    'hora_entrada' => now()->format('H:i'),
+]);
+
+    // Redirige a la vista de la sede para que se recargue el arreglo de ocupados
+    return redirect()->route('reservas.reservaPorSede', $request->sede_id)
+        ->with('success', '¡Reserva registrada exitosamente!')
+        ->with('reserva', $reserva);
+}
 
     public function ticket($id)
     {
@@ -56,15 +73,14 @@ class ReservaController extends Controller
 
         $ticket = 'TICKET-' . str_pad($reserva->id, 6, '0', STR_PAD_LEFT);
 
-        // Redirige a la vista del ticket mostrando el monto actualizado
         return view('reservas.ticket', compact('reserva', 'ticket'));
     }
 
-    public function reservaPorSede($sedeId)
+        public function reservaPorSede($sedeId)
     {
         $sede = Sede::findOrFail($sedeId);
-        // Obtén los lugares ocupados en la sede
         $ocupados = Reserva::where('sede_id', $sede->id)
+            ->whereNull('hora_salida')
             ->pluck('posicion')
             ->toArray();
 
